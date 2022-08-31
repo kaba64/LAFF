@@ -4,8 +4,7 @@
 
 #define PRINT_DATA
 
-// Declaration of local prototypes.                            
-int Dot_unb( FLA_Obj alpha, FLA_Obj b, FLA_Obj c );
+// Declaration of local prototypes.
 int ZeroMatrix_unb(FLA_Obj A);
 
 int main( int argc, char *argv[] ) {
