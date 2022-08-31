@@ -1,7 +1,7 @@
 CC := gcc
 LFLAGS = -lflame -llapack
 TARGET_EXEC := out
-SRCS := set-zero.c
+SRCS := SetToIdentity.c
 OBJS=$(SRCS:.c=.o)
 
 
