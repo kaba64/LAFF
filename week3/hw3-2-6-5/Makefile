@@ -1,7 +1,7 @@
 CC := gcc
 LFLAGS = -lflame -lopenblas
 TARGET_EXEC := out
-SRCS := Transpose.c
+SRCS := Symmetrize_tri.c
 OBJS=$(SRCS:.c=.o)
 
 
