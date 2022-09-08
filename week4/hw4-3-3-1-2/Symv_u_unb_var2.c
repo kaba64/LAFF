@@ -1,14 +1,14 @@
 #include <stdio.h>
 # include <sys/time.h>
 #include <FLAME.h>
-#include "dot.h"
+#include "axpy.h"
+#include "AXPY_Row_to_Column.h"
 
 #define PRINT_DATA
-
 // Declaration of local prototypes.
 void matrix_generate( FLA_Obj A, char type);
 double spendtimeinsecond();
-int Trmvp_un_unb_var1( FLA_Obj U, FLA_Obj x, FLA_Obj y );
+int Symv_u_unb_var2( FLA_Obj U, FLA_Obj x, FLA_Obj y );
 
 int main( int argc, char *argv[] ) {
   int m_A,n_A;
@@ -20,7 +20,7 @@ int main( int argc, char *argv[] ) {
   FLA_Obj_create(FLA_DOUBLE,m_A,n_A,0,0,&A);
   FLA_Obj_create(FLA_DOUBLE,n_A,1,0,0,&x);
   FLA_Obj_create(FLA_DOUBLE,m_A,1,0,0,&y);
-  matrix_generate(A,'U');
+  matrix_generate(A,'S');
   matrix_generate(x,'F');
 #ifdef PRINT_DATA
   FLA_Obj_show( " A = [ ", A, "%le", " ];" );
@@ -28,7 +28,7 @@ int main( int argc, char *argv[] ) {
   FLA_Obj_show( " Y = [ ", y, "%le", " ];" );
 #endif
   t1=spendtimeinsecond();
-  Trmvp_un_unb_var1(A,x,y);
+  Symv_u_unb_var2(A,x,y);
   t2=spendtimeinsecond();
 #ifdef PRINT_DATA
   FLA_Obj_show( " A = [ ", A, "%le", " ];" );
@@ -50,7 +50,7 @@ int main( int argc, char *argv[] ) {
    Programmed by: Kazem Bazesefidpar
    kazemba@kth.se
 */
-int Trmvp_un_unb_var1( FLA_Obj U, FLA_Obj x, FLA_Obj y )
+int Symv_u_unb_var2( FLA_Obj U, FLA_Obj x, FLA_Obj y )
 {
   FLA_Obj UTL,   UTR,      U00,  u01,       U02, 
           UBL,   UBR,      u10t, upsilon11, u12t,
@@ -92,8 +92,9 @@ int Trmvp_un_unb_var1( FLA_Obj U, FLA_Obj x, FLA_Obj y )
                            yB,                &y2,        1, FLA_BOTTOM );
 
     /*------------------------------------------------------------*/
-    Dot_unb(psi1,upsilon11,chi1);
-    Dot_unb(psi1,u12t,x2);
+    AXPY_unb(chi1,u01,y0);
+    AXPY_unb(chi1,upsilon11,psi1);
+    AXPY_Row_to_Column_unb(chi1,u12t,y2);
     /*------------------------------------------------------------*/
 
     FLA_Cont_with_3x3_to_2x2( &UTL, /**/ &UTR,       U00,  u01,       /**/ U02,
@@ -121,7 +122,7 @@ void matrix_generate( FLA_Obj A, char type) {
   double  * buff_A;
   int  m_A, n_A, ldim_A;
   int  num;
-
+  
   buff_A = ( double * ) FLA_Obj_buffer_at_view( A );
   m_A    = FLA_Obj_length( A );
   n_A    = FLA_Obj_width ( A );
@@ -130,22 +131,33 @@ void matrix_generate( FLA_Obj A, char type) {
   if(type=='F'){
     for (int j = 0; j < n_A; j++ ) {
       for (int i = 0; i < m_A; i++ ) {
-	buff_A[ i + j * ldim_A ] = ( double ) num;
-	num++;
+        buff_A[ i + j * ldim_A ] = ( double ) num;
+        num++;
+      }
+    }
+  }else if(type=='S'){
+    for (int j = 0; j < n_A; j++ ) {
+      for (int i = 0; i < m_A; i++ ) {
+	if(i>=j){
+	  buff_A[ i + j * ldim_A ] = ( double ) num;
+	  num++;
+	}else{
+	  buff_A[ i + j * ldim_A ]=buff_A[j+i*ldim_A];
+	}
       }
     }
   }else if(type=='U'){
     for (int j = 0; j < n_A; j++ ) {
       for (int i = 0; i < j+1; i++ ) {
-	buff_A[ i + j * ldim_A ] = ( double ) num;
-	num++;
+        buff_A[ i + j * ldim_A ] = ( double ) num;
+        num++;
       }
     }
   }else if(type=='L'){
     for (int j = 0; j < n_A; j++ ) {
       for (int i = j; i < m_A; i++ ) {
-	buff_A[ i + j * ldim_A ] = ( double ) num;
-	num++;
+        buff_A[ i + j * ldim_A ] = ( double ) num;
+        num++;
       }
     }
   }
